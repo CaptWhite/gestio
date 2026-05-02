@@ -1,0 +1,24 @@
+name: Deploy Mínimo
+
+on:
+  push:
+    branches:
+      - main  # Se ejecuta cada vez que subes algo a la rama main
+
+jobs:
+  copy-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📤 Copiar README al VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST_ASTER }}
+          username: ${{ secrets.SSH_USER_ASTER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "README.md"
+          target: "/opt/workspaces/prova"
+          # strip_components: 0 asegura que no cree carpetas extra
+          strip_components: 0

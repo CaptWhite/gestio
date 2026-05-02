@@ -1,0 +1,26 @@
+# Dependencias locales (se deben instalar dentro del contenedor)
+node_modules
+npm-debug.log
+
+# Build de Next.js local
+.next
+out
+
+# Variables de entorno locales
+.env
+*.env.local
+
+# Git y herramientas
+.git
+.gitignore
+.vscode
+.dockerignore
+README.md
+
+# Logs y temporales
+logs
+*.log
+
+_batch/*
+_docs/*
+_scripts/*

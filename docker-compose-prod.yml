@@ -1,0 +1,66 @@
+services:
+  gestio:
+    image: captwhite/gestio:latest
+    container_name: gestio
+    restart: always
+    env_file:
+      - ./.env
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.admin-http.entrypoints=web"
+      - "traefik.http.routers.admin-http.rule=Host(`admin.captwhite.com`)"
+      - "traefik.http.routers.admin-http.middlewares=redirect-to-https@docker"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      #
+      - "traefik.http.routers.admin.entrypoints=websecure"
+      - "traefik.http.routers.admin.rule=Host(`admin.captwhite.com`)"
+      - "traefik.http.routers.admin.tls=true"
+      - "traefik.http.routers.admin.tls.certresolver=myresolver"
+      - "traefik.http.services.admin.loadbalancer.server.port=3000"
+    networks:
+      - webnet-gestio
+
+  db:
+    image: mariadb:latest
+    container_name: gestio-db
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}  
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mariadb:/var/lib/mysql
+    networks:
+      - webnet-gestio
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: gestio-phpmyadmin
+    restart: unless-stopped
+    init: true
+    depends_on:
+      - db
+    networks:
+      - webnet-gestio
+    environment:
+      - PMA_ARBITRARY=1
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.admindb-http.entrypoints=web"
+      - "traefik.http.routers.admindb-http.rule=Host(`admindb.captwhite.com`)"
+      - "traefik.http.routers.admindb-http.middlewares=redirect-to-https@docker"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+      #
+      - "traefik.http.routers.admindb.entrypoints=websecure"
+      - "traefik.http.routers.admindb.rule=Host(`admindb.captwhite.com`)"
+      - "traefik.http.routers.admindb.tls=true"
+      - "traefik.http.routers.admindb.tls.certresolver=myresolver"
+      - "traefik.http.services.admindb.loadbalancer.server.port=80"
+
+networks:
+  webnet-gestio:
+    external: true

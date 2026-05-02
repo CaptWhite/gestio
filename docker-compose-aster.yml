@@ -1,0 +1,50 @@
+services:
+  gestio:
+    image: captwhite/gestio:latest
+    container_name: gestio
+    restart: always
+    env_file:
+      - ./.env
+    networks:
+      - webnet-gestio
+      - proxy_network
+
+  db:
+    image: mariadb:latest
+    container_name: gestio-db
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}  
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mariadb:/var/lib/mysql
+    networks:
+      - webnet-gestio
+
+  phpmyadmin:
+    image: phpmyadmin
+    container_name: gestio-phpmyadmin
+    restart: unless-stopped
+    init: true
+    depends_on:
+      - db
+    
+    environment:
+      PMA_HOST: db
+      PMA_ABSOLUTE_URI: https://intranet.aster.cat/gestio/phpmyadmin/
+      PMA_ARBITRARY: 1
+    
+    networks:
+      - webnet-gestio
+      - proxy_network
+  
+
+networks:
+  webnet-gestio:
+    external: true
+  proxy_network:  
+    external: true
