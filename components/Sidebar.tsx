@@ -31,7 +31,7 @@ export default function Sidebar() {
           className="w-24 h-24 object-contain"
         />
         <span className="font-semibold text-sm tracking-tight text-center uppercase text-zinc-600 dark:text-zinc-400">
-          ASTER - Administració
+          ASTER - Gestió administrativa
         </span>
       </div>
       

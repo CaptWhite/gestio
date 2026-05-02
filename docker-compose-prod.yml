@@ -8,16 +8,16 @@ services:
 
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.admin-http.entrypoints=web"
-      - "traefik.http.routers.admin-http.rule=Host(`admin.captwhite.com`)"
-      - "traefik.http.routers.admin-http.middlewares=redirect-to-https@docker"
+      - "traefik.http.routers.gestio-http.entrypoints=web"
+      - "traefik.http.routers.gestio-http.rule=Host(`gestio.captwhite.com`)"
+      - "traefik.http.routers.gestio-http.middlewares=redirect-to-https@docker"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       #
-      - "traefik.http.routers.admin.entrypoints=websecure"
-      - "traefik.http.routers.admin.rule=Host(`admin.captwhite.com`)"
-      - "traefik.http.routers.admin.tls=true"
-      - "traefik.http.routers.admin.tls.certresolver=myresolver"
-      - "traefik.http.services.admin.loadbalancer.server.port=3000"
+      - "traefik.http.routers.gestio.entrypoints=websecure"
+      - "traefik.http.routers.gestio.rule=Host(`gestio.captwhite.com`)"
+      - "traefik.http.routers.gestio.tls=true"
+      - "traefik.http.routers.gestio.tls.certresolver=myresolver"
+      - "traefik.http.services.gestio.loadbalancer.server.port=3000"
     networks:
       - webnet-gestio
 
@@ -50,16 +50,16 @@ services:
       - PMA_ARBITRARY=1
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.admindb-http.entrypoints=web"
-      - "traefik.http.routers.admindb-http.rule=Host(`admindb.captwhite.com`)"
-      - "traefik.http.routers.admindb-http.middlewares=redirect-to-https@docker"
+      - "traefik.http.routers.gestiodb-http.entrypoints=web"
+      - "traefik.http.routers.gestiodb-http.rule=Host(`gestiodb.captwhite.com`)"
+      - "traefik.http.routers.gestiodb-http.middlewares=redirect-to-https@docker"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
       #
-      - "traefik.http.routers.admindb.entrypoints=websecure"
-      - "traefik.http.routers.admindb.rule=Host(`admindb.captwhite.com`)"
-      - "traefik.http.routers.admindb.tls=true"
-      - "traefik.http.routers.admindb.tls.certresolver=myresolver"
-      - "traefik.http.services.admindb.loadbalancer.server.port=80"
+      - "traefik.http.routers.gestiodb.entrypoints=websecure"
+      - "traefik.http.routers.gestiodb.rule=Host(`gestiodb.captwhite.com`)"
+      - "traefik.http.routers.gestiodb.tls=true"
+      - "traefik.http.routers.gestiodb.tls.certresolver=myresolver"
+      - "traefik.http.services.gestiodb.loadbalancer.server.port=80"
 
 networks:
   webnet-gestio:

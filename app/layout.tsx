@@ -3,7 +3,7 @@ import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 
 export const metadata: Metadata = {
-  title: "ASTER - Administració",
+  title: "ASTER - Gestió administrativa",
   description: "Modern minimalist SaaS CRM for ASTER",
 };
 
