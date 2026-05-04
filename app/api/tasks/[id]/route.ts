@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/auth';
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+  
   try {
     const [rows]: any = await pool.query('SELECT * FROM tasques WHERE id = ?', [params.id]);
     
@@ -29,6 +36,11 @@ export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+  
   try {
     const data = await request.json();
     const { title, priority, type, payload } = data;

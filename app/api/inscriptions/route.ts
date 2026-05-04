@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/auth';
 
 export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+  
   try {
     const [rows]: any = await pool.query(
       "SELECT *, date_create as date FROM tasques WHERE title LIKE 'Inscripció de soci per web%' ORDER BY date_create DESC"
@@ -30,6 +37,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+  
   try {
     const { id } = await request.json();
     

@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/auth';
 
 export async function GET(request: Request) {
+  // const session = await getServerSession(authOptions);
+  // if (!session) {
+  //   return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  // }
+  
   const { searchParams } = new URL(request.url);
   const mode = searchParams.get('mode');
 
@@ -99,6 +106,11 @@ export async function GET(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+  
   try {
     const body = await request.json();
     const { 
@@ -131,6 +143,11 @@ export async function PUT(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+  
   try {
     const body = await request.json();
     const { 

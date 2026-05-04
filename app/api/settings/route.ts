@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/auth';
 
 export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+  
   try {
     const [rows] = await pool.query('SELECT nom, correu FROM config LIMIT 1');
     const config = (rows as any[])[0];
@@ -18,6 +25,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+  
   try {
     const { nom, correu } = await request.json();
 

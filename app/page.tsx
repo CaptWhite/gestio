@@ -29,13 +29,16 @@ export default function Dashboard() {
           fetch('/gestio/api/tasks?mode=stats')
         ]);
         
-        const custData = await custRes.json();
-        const taskData = await taskRes.json();
-        
-        if (custRes.ok) setCustomerStats(custData);
-        if (taskRes.ok) setTaskStats(taskData);
+        if (custRes.ok) {
+          const custData = await custRes.json();
+          setCustomerStats(custData);
+        }
+        if (taskRes.ok) {
+          const taskData = await taskRes.json();
+          setTaskStats(taskData);
+        }
       } catch (error) {
-        console.error("Error fetching dashboard stats:", error);
+        // Silently fail - show empty data
       } finally {
         setLoading(false);
       }

@@ -2,7 +2,14 @@
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
-  basePath: '/gestio',
+  async rewrites() {
+    return [
+      {
+        source: '/gestio/:path*',
+        destination: '/:path*',
+      },
+    ]
+  },
 }
 
 
