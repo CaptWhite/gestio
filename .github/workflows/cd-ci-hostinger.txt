@@ -86,7 +86,7 @@ jobs:
             echo "DB_HOST=db" >> .env
 
             # LDAP
-            echo "LDAP_URL=ldap-server" >> .env
+            echo "LDAP_URL=ldap://ldap-server:389" >> .env
             echo "LDAP_BASE_DN=${{ secrets.LDAP_BASE_DN }}" >> .env
             echo "LDAP_BIND_DN=${{ secrets.LDAP_BIND_DN }}" >> .env
             echo "LDAP_BIND_PW=${{ secrets.LDAP_BIND_PW }}" >> .env
