@@ -12,8 +12,10 @@ services:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      - app-network
 
-  app:
+  gestio:
     build:
       context: .
       dockerfile: Dockerfile
@@ -21,13 +23,28 @@ services:
     restart: always
     ports:
       - "3000:3000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - DB_HOST=db
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_DATABASE=${DB_DATABASE}
+
+      - LDAP_URL=ldap://ldap-server:389
+      - LDAP_BASE_DN=${LDAP_BASE_DN}
+      - LDAP_BIND_DN=${LDAP_BIND_DN}
+      - LDAP_BIND_PW=${LDAP_BIND_PW}
+      - LDAP_USER_SEARCH=${LDAP_USER_SEARCH}
+
+      - AUTH_SECRET=${AUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXTAUTH_URL_INTERNAL=${NEXTAUTH_URL_INTERNAL}
     depends_on:
       - db
+    networks:
+      - app-network
+      - webnet-ldap
 
   phpmyadmin:
     image: phpmyadmin:latest
@@ -39,6 +56,14 @@ services:
       - db
     ports:
       - "8091:80"  
+    networks:
+      - app-network
 
 volumes:
   db_data:
+
+networks:
+  webnet-ldap:
+    external: true 
+  app-network:
+    external: true 

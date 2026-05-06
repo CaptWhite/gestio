@@ -6,7 +6,7 @@ npm-debug.log
 .next
 out
 
-# Variables de entorno locales
+# Variables de entorno locales (excluir .env local)
 .env
 *.env.local
 

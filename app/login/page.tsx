@@ -17,18 +17,21 @@ export default function LoginPage() {
     setLoading(true)
     setError("")
     
+    const searchParams = new URLSearchParams(window.location.search)
+    const callbackUrl = searchParams.get("callbackUrl") || "/gestio"
+    
     try {
       const result = await signIn("credentials", {
         username,
         password,
         redirect: false,
-        callbackUrl: "/"
+        callbackUrl
       })
       
       if (result?.error) {
         setError("Usuari o contrasenya incorrectes")
       } else {
-        router.push("/")
+        router.push(callbackUrl)
       }
     } catch (err: any) {
       setError("Error de connexió")
