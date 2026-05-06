@@ -1,14 +1,4 @@
 services:
-  gestio:
-    image: captwhite/gestio:latest
-    container_name: gestio
-    restart: always
-    env_file:
-      - ./.env
-    networks:
-      - webnet-gestio
-      - proxy_network
-
   db:
     image: mariadb:latest
     container_name: gestio-db
@@ -25,6 +15,18 @@ services:
     networks:
       - webnet-gestio
 
+  gestio:
+    image: captwhite/gestio:latest
+    container_name: gestio-app
+    restart: always
+    env_file:
+      - ./.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock 
+
+    networks:
+      - webnet-gestio
+      - proxy_network
   phpmyadmin:
     image: phpmyadmin
     container_name: gestio-phpmyadmin

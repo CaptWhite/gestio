@@ -44,8 +44,8 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
-          build-args: |
-            APP_BASE_PATH=/gestio
+          build-args: |           
+            APP_BASE_PATH: /gestio          
           # Next.js genera muchas capas, el cache gha es vital aquí
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -60,22 +60,22 @@ jobs:
       - name: 📤 Sync files to VPS
         uses: appleboy/scp-action@v0.1.4
         with:
-          host: ${{ secrets.SSH_HOST_ASTER }}
-          username: ${{ secrets.SSH_USER_ASTER }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22 # Asegúrate de que el puerto sea el correcto
-          source: "docker-compose-aster.yml"
-          target: "/opt/workspaces/gestio/"
+          # Asegúrate de que el nombre del fichero coincida con el tuyo
+          source: "docker-compose-prod.yml"
+          target: "/home/${{ secrets.SSH_USER }}/workspaces/gestio/"
 
       - name: 🚀 Deploy containers and restart service
         uses: appleboy/ssh-action@v1.0.1
         with:
-          host: ${{ secrets.SSH_HOST_ASTER }}
-          username: ${{ secrets.SSH_USER_ASTER }}
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             echo "Iniciando despliegue de Next.js..."
-            cd /opt/workspaces/gestio
+            cd /home/${{ secrets.SSH_USER }}/workspaces/gestio
 
             echo "Configurando variables de entorno (.env)..."
             # Importante: Next.js suele necesitar variables en build-time o runtime
@@ -85,12 +85,22 @@ jobs:
             echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
             echo "DB_HOST=db" >> .env
 
+            # LDAP
+            echo "LDAP_URL=ldap-server" >> .env
+            echo "LDAP_BASE_DN=${{ secrets.LDAP_BASE_DN }}" >> .env
+            echo "LDAP_BIND_DN=${{ secrets.LDAP_BIND_DN }}" >> .env
+            echo "LDAP_BIND_PW=${{ secrets.LDAP_BIND_PW }}" >> .env
+            echo "LDAP_USER_SEARCH=${{ secrets.LDAP_USER_SEARCH }}" >> .env
+            # Auth
+            echo "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" >> .env
+            echo "NEXTAUTH_URL=http://localhost:3000" >> .env
+            echo "NEXTAUTH_URL_INTERNAL=http://localhost:3000" >> .env
 
             echo "Actualizando imágenes y reiniciando..."
-            docker compose -f docker-compose-aster.yml pull
-            docker compose -f docker-compose-aster.yml up -d --remove-orphans
+            docker compose -f docker-compose-prod.yml pull
+            docker compose -f docker-compose-prod.yml up -d --remove-orphans
             
             echo "Limpiando imágenes antiguas..."
             docker image prune -f
             
-            echo "✅ Despliegue completado con éxito." 
+            echo "✅ Despliegue completado con éxito."

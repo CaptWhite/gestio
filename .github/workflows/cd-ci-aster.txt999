@@ -8,6 +8,7 @@ on:
 env:
   DOCKERHUB_USERNAME: captwhite
   IMAGE_NAME: captwhite/gestio 
+  APP_BASE_PATH: /gestio
 
 jobs:
   ci_build:
@@ -43,6 +44,8 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          build-args: |
+            APP_BASE_PATH=/gestio
           # Next.js genera muchas capas, el cache gha es vital aquí
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -57,22 +60,22 @@ jobs:
       - name: 📤 Sync files to VPS
         uses: appleboy/scp-action@v0.1.4
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
+          host: ${{ secrets.SSH_HOST_ASTER }}
+          username: ${{ secrets.SSH_USER_ASTER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          # Asegúrate de que el nombre del fichero coincida con el tuyo
-          source: "docker-compose-prod.yml"
-          target: "/home/${{ secrets.SSH_USER }}/workspaces/gestio/"
+          port: 22 # Asegúrate de que el puerto sea el correcto
+          source: "docker-compose-aster.yml"
+          target: "/opt/workspaces/gestio/"
 
       - name: 🚀 Deploy containers and restart service
         uses: appleboy/ssh-action@v1.0.1
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
+          host: ${{ secrets.SSH_HOST_ASTER }}
+          username: ${{ secrets.SSH_USER_ASTER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             echo "Iniciando despliegue de Next.js..."
-            cd /home/${{ secrets.SSH_USER }}/workspaces/gestio
+            cd /opt/workspaces/gestio
 
             echo "Configurando variables de entorno (.env)..."
             # Importante: Next.js suele necesitar variables en build-time o runtime
@@ -94,10 +97,11 @@ jobs:
             echo "NEXTAUTH_URL_INTERNAL=http://localhost:3000" >> .env
 
             echo "Actualizando imágenes y reiniciando..."
-            docker compose -f docker-compose-prod.yml pull
-            docker compose -f docker-compose-prod.yml up -d --remove-orphans
+            docker compose -f docker-compose-aster.yml pull
+            docker compose -f docker-compose-aster.yml up -d --remove-orphans
             
             echo "Limpiando imágenes antiguas..."
             docker image prune -f
             
-            echo "✅ Despliegue completado con éxito."
+            echo "✅ Despliegue completado con éxito." 
+
