@@ -1,10 +1,28 @@
 services:
+  db:
+    image: mariadb:latest
+    container_name: gestio-db
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}  
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mariadb:/var/lib/mysql
+    networks:
+      - webnet-gestio
+
   gestio:
     image: captwhite/gestio:latest
-    container_name: gestio
+    container_name: gestio-app
     restart: always
     env_file:
       - ./.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock 
 
     labels:
       - "traefik.enable=true"
@@ -21,21 +39,7 @@ services:
     networks:
       - webnet-gestio
 
-  db:
-    image: mariadb:latest
-    container_name: gestio-db
-    restart: always
-    environment:
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MARIADB_DATABASE: ${DB_DATABASE}
-      MARIADB_USER: ${DB_USER}
-      MARIADB_PASSWORD: ${DB_PASSWORD}  
-    ports:
-      - "3306:3306"
-    volumes:
-      - ./mariadb:/var/lib/mysql
-    networks:
-      - webnet-gestio
+
 
   phpmyadmin:
     image: phpmyadmin

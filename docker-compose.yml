@@ -39,7 +39,7 @@ services:
 
       - AUTH_SECRET=${AUTH_SECRET}
       - NEXTAUTH_URL=${NEXTAUTH_URL}
-      - NEXTAUTH_URL_INTERNAL=${NEXTAUTH_URL_INTERNAL}
+      - NEXTAUTH_URL_INTERNAL=http://localhost:3000
     depends_on:
       - db
     networks:
