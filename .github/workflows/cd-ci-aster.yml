@@ -85,6 +85,16 @@ jobs:
             echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
             echo "DB_HOST=db" >> .env
 
+            # LDAP
+            echo "LDAP_URL=ldap-server" >> .env
+            echo "LDAP_BASE_DN=${{ secrets.LDAP_BASE_DN }}" >> .env
+            echo "LDAP_BIND_DN=${{ secrets.LDAP_BIND_DN }}" >> .env
+            echo "LDAP_BIND_PW=${{ secrets.LDAP_BIND_PW }}" >> .env
+            echo "LDAP_USER_SEARCH=${{ secrets.LDAP_USER_SEARCH }}" >> .env
+            # Auth
+            echo "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" >> .env
+            echo "NEXTAUTH_URL=http://localhost:3000" >> .env
+            echo "NEXTAUTH_URL_INTERNAL=http://localhost:3000" >> .env
 
             echo "Actualizando imágenes y reiniciando..."
             docker compose -f docker-compose-aster.yml pull
