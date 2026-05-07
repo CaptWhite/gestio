@@ -25,10 +25,6 @@ WORKDIR /app
 
 ENV NODE_ENV production
 
-RUN apk add --no-cache docker-cli
-
-# Skip adding nextjs user for now to use root
-
 COPY --from=builder /app/public ./public
 
 # Set the correct permission for prerender cache

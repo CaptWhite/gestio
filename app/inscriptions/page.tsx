@@ -11,7 +11,7 @@ export default function InscriptionsPage() {
 
   const fetchInscriptions = async () => {
     try {
-      const res = await fetch('/gestio/api/inscriptions');
+      const res = await fetch('/api/inscriptions');
       const data = await res.json();
       if (Array.isArray(data)) {
         setInscriptions(data);
@@ -33,7 +33,7 @@ export default function InscriptionsPage() {
 
   const togglePagat = async (id: string) => {
     try {
-      await fetch('/gestio/api/inscriptions', {
+      await fetch('/api/inscriptions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })

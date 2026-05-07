@@ -36,7 +36,7 @@ export default function AddCustomerModal({ onClose, onSuccess }: AddCustomerModa
   useEffect(() => {
     const fetchNextId = async () => {
       try {
-        const res = await fetch('/gestio/api/customers?mode=nextId');
+        const res = await fetch('/api/customers?mode=nextId');
         if (res.ok) {
           const data = await res.json();
           setFormData(prev => ({ ...prev, id_socis: data.nextId.toString() }));
@@ -52,7 +52,7 @@ export default function AddCustomerModal({ onClose, onSuccess }: AddCustomerModa
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const res = await fetch('/gestio/api/customers', {
+      const res = await fetch('/api/customers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

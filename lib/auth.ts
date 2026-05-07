@@ -1,5 +1,9 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
+import { execSync } from "child_process"
+
+const isWindows = process.platform === "win32"
+const dockerCmd = isWindows ? "docker.exe" : "docker"
 
 interface LDAPUser {
   dn: string
@@ -76,7 +80,7 @@ function dockerExecLDAPSearch(email: string, password: string): Promise<LDAPUser
     const escapedBindDN = bindDN.replace(/"/g, '\\"')
     const escapedBindPW = bindPW.replace(/"/g, '\\"')
 
-    const searchCmd = `docker exec ldap-server ldapsearch -H ${ldapUrl} -D "${escapedBindDN}" -w "${escapedBindPW}" -b "${escapedBase}" "${escapedFilter}" dn givenName sn mail cn`
+    const searchCmd = `${dockerCmd} exec ldap-server ldapsearch -H ${ldapUrl} -D "${escapedBindDN}" -w "${escapedBindPW}" -b "${escapedBase}" "${escapedFilter}" dn givenName sn mail cn`
 
     try {
       const output = execSync(searchCmd, { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 })
@@ -107,7 +111,7 @@ function dockerExecLDAPSearch(email: string, password: string): Promise<LDAPUser
 
       const escapedUserDN = dn.replace(/"/g, '\\"')
       const escapedPW = password.replace(/"/g, '\\"')
-      const authCmd = `docker exec ldap-server ldapsearch -H ${ldapUrl} -D "${escapedUserDN}" -w "${escapedPW}" -b "${escapedUserDN}" "(objectClass=*)" dn`
+      const authCmd = `${dockerCmd} exec ldap-server ldapsearch -H ${ldapUrl} -D "${escapedUserDN}" -w "${escapedPW}" -b "${escapedUserDN}" "(objectClass=*)" dn`
 
       try {
         const authOutput = execSync(authCmd, { encoding: 'utf8', maxBuffer: 1024 * 1024 })

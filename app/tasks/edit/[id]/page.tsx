@@ -19,7 +19,7 @@ export default function EditTaskPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     const fetchTask = async () => {
       try {
-        const res = await fetch(`/gestio/api/tasks/${params.id}`);
+        const res = await fetch(`/api/tasks/${params.id}`);
         if (!res.ok) throw new Error("Failed to fetch task");
         const data = await res.json();
         setFormData({
@@ -44,7 +44,7 @@ export default function EditTaskPage({ params }: { params: { id: string } }) {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/gestio/api/tasks/${params.id}`, {
+      const res = await fetch(`/api/tasks/${params.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)

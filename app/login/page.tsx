@@ -18,7 +18,7 @@ export default function LoginPage() {
     setError("")
     
     const searchParams = new URLSearchParams(window.location.search)
-    const callbackUrl = searchParams.get("callbackUrl") || "/gestio"
+    const callbackUrl = searchParams.get("callbackUrl") || "/"
     
     try {
       const result = await signIn("credentials", {
@@ -31,7 +31,7 @@ export default function LoginPage() {
       if (result?.error) {
         setError("Usuari o contrasenya incorrectes")
       } else {
-        router.push(callbackUrl)
+        window.location.href = callbackUrl
       }
     } catch (err: any) {
       setError("Error de connexió")
@@ -45,7 +45,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md p-8 bg-white dark:bg-zinc-800 rounded-lg shadow-md border border-zinc-200 dark:border-zinc-700">
         <div className="text-center mb-8">
           <img 
-            src="/gestio/logo ASTER.png" 
+            src="/logo ASTER.png" 
             alt="ASTER Logo" 
             className="w-20 h-20 mx-auto mb-4 object-contain"
           />

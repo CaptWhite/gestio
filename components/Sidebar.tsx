@@ -14,11 +14,11 @@ import {
 import { cn } from "@/lib/utils";
 
 const navigation = [
-  { name: 'Dashboard', href: '/gestio', icon: LayoutDashboard },
-  { name: 'Socis', href: '/gestio/customers', icon: Users },
-  { name: 'Tasques', href: '/gestio/tasks', icon: CheckSquare },
-  { name: 'Inscripcions', href: '/gestio/inscriptions', icon: UserPlus },
-  { name: 'Configuració', href: '/gestio/settings', icon: Settings },
+  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Socis', href: '/customers', icon: Users },
+  { name: 'Tasques', href: '/tasks', icon: CheckSquare },
+  { name: 'Inscripcions', href: '/inscriptions', icon: UserPlus },
+  { name: 'Configuració', href: '/settings', icon: Settings },
 ];
 
 export default function Sidebar() {
@@ -29,7 +29,7 @@ export default function Sidebar() {
     <div className="flex flex-col w-64 border-r border-border bg-background">
       <div className="flex flex-col items-center py-8 px-6 gap-3">
         <img 
-          src="/gestio/logo ASTER.png" 
+          src="/logo ASTER.png" 
           alt="ASTER Logo"
           className="w-24 h-24 object-contain"
         />
@@ -73,7 +73,7 @@ export default function Sidebar() {
               </div>
             </div>
             <button
-              onClick={() => signOut({ callbackUrl: "/gestio/login" })}
+              onClick={() => signOut({ callbackUrl: "/login" })}
               className="p-2 text-zinc-400 hover:text-zinc-600 transition-colors"
               title="Tancar sessió - Autenticat"
             >

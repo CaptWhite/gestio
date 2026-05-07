@@ -58,7 +58,7 @@ export default function EditCustomerModal({ customer, onClose, onSuccess }: Edit
     if (e) e.preventDefault();
     setIsSubmitting(true);
     try {
-      const res = await fetch('/gestio/api/customers', {
+      const res = await fetch('/api/customers', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

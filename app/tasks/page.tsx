@@ -14,7 +14,7 @@ export default function TasksPage() {
 
   const fetchTasks = async () => {
     try {
-      const res = await fetch('/gestio/api/tasks');
+      const res = await fetch('/api/tasks');
       const data = await res.json();
       if (Array.isArray(data)) {
         setTasks(data);
@@ -36,7 +36,7 @@ export default function TasksPage() {
 
   const toggleTask = async (id: string) => {
     try {
-      await fetch('/gestio/api/tasks', {
+      await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'toggle', id })
@@ -50,7 +50,7 @@ export default function TasksPage() {
   const deleteTask = async (id: string) => {
     if (!confirm("¿Estás seguro de que quieres eliminar esta tarea?")) return;
     try {
-      await fetch('/gestio/api/tasks', {
+      await fetch('/api/tasks', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })

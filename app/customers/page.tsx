@@ -18,7 +18,7 @@ export default function CustomersPage() {
   const fetchCustomers = async () => {
     try {
       setError(null);
-      const res = await fetch('/gestio/api/customers');
+      const res = await fetch('/api/customers');
       const data = await res.json();
       
       if (Array.isArray(data)) {

@@ -15,7 +15,7 @@ export default function SettingsPage() {
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch('/gestio/api/settings');
+      const res = await fetch('/api/settings');
       const data = await res.json();
       if (res.ok) {
         setNom(data.nom || "");
@@ -35,7 +35,7 @@ export default function SettingsPage() {
     setSaving(true);
     setMessage(null);
     try {
-      const res = await fetch('/gestio/api/settings', {
+      const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nom, correu })

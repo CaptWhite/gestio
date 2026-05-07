@@ -25,8 +25,8 @@ export default function Dashboard() {
     const fetchData = async () => {
       try {
         const [custRes, taskRes] = await Promise.all([
-          fetch('/gestio/api/customers?mode=stats'),
-          fetch('/gestio/api/tasks?mode=stats')
+          fetch('/api/customers?mode=stats'),
+          fetch('/api/tasks?mode=stats')
         ]);
         
         if (custRes.ok) {

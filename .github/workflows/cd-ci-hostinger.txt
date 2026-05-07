@@ -7,8 +7,7 @@ on:
 
 env:
   DOCKERHUB_USERNAME: captwhite
-  IMAGE_NAME: captwhite/gestio 
-  APP_BASE_PATH: /gestio
+  IMAGE_NAME: captwhite/gestio
 
 jobs:
   ci_build:
@@ -44,8 +43,6 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
-          build-args: |           
-            APP_BASE_PATH: /gestio          
           # Next.js genera muchas capas, el cache gha es vital aquí
           cache-from: type=gha
           cache-to: type=gha,mode=max

@@ -13,7 +13,7 @@ export default function ViewInscriptionPage({ params }: { params: { id: string }
   useEffect(() => {
     const fetchTask = async () => {
       try {
-        const res = await fetch(`/gestio/api/tasks/${params.id}`);
+        const res = await fetch(`/api/tasks/${params.id}`);
         if (!res.ok) throw new Error("Failed to fetch task");
         const data = await res.json();
         
