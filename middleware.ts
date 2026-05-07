@@ -6,8 +6,27 @@ export function middleware(request: any) {
   
   const hasSessionCookie = cookieHeader.includes("next-auth.session-token")
   
-  // Allow login, api/auth, and _next paths
-  if (pathname === "/login" || pathname === "/gestio/login" || pathname.startsWith("/gestio/api/auth") || pathname.startsWith("/gestio/api/") || pathname.startsWith("/_next") || pathname.includes("favicon") || pathname.includes("logo")) {
+  // Allow static assets, API, and auth routes
+  const isStaticAsset = 
+    pathname.startsWith("/_next/static/") ||
+    pathname.startsWith("/_next/data/") ||
+    pathname.startsWith("/_next/image/") ||
+    pathname.includes("/gestio/_next/")
+
+  const isAPI = 
+    pathname.startsWith("/api/") || 
+    pathname.startsWith("/gestio/api/")
+
+  const isAuth = 
+    pathname.includes("/api/auth/") || 
+    pathname === "/login" || 
+    pathname === "/gestio/login"
+
+  const isPublic = 
+    pathname.includes("favicon") || 
+    pathname.includes("logo")
+
+  if (isStaticAsset || isAPI || isAuth || isPublic) {
     return NextResponse.next()
   }
   
@@ -27,5 +46,5 @@ export function middleware(request: any) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"]
+  matcher: ["/((?!favicon.ico).*)"]
 }
