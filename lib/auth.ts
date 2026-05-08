@@ -59,10 +59,9 @@ export const authOptions = {
   }
 }
 
-function dockerExecLDAPSearch(email: string, password: string): Promise<LDAPUser | null> {
-  return new Promise((resolve) => {
-    const { execSync } = require('child_process')
-    const ldapUrl = process.env.LDAP_URL || "ldap://localhost:389"
+async function dockerExecLDAPSearch(email: string, password: string): Promise<LDAPUser | null> {
+  const { execSync } = require('child_process')
+  const ldapUrl = process.env.LDAP_URL || "ldap://localhost:389"
     const baseDN = process.env.LDAP_BASE_DN || "dc=aster,dc=cat"
     const bindDN = process.env.LDAP_BIND_DN || "cn=admin,dc=aster,dc=cat"
     const bindPW = process.env.LDAP_BIND_PW || ""
@@ -104,7 +103,7 @@ function dockerExecLDAPSearch(email: string, password: string): Promise<LDAPUser
 
       if (!dn) {
         console.log("User not found")
-        return resolve(null)
+        return null
       }
 
       console.log("Found DN:", dn)
@@ -118,20 +117,58 @@ function dockerExecLDAPSearch(email: string, password: string): Promise<LDAPUser
 
         if (authOutput.includes('dn:') || authOutput.includes('result: 0')) {
           console.log("AUTH OK!")
-          resolve({ dn, attrs })
+          
+          const isMember = await checkGroupMembership(dn, password)
+          if (!isMember) {
+            console.log("USER NOT IN GROUP 'gestors' - REJECTED")
+            return null
+          }
+          
+          return { dn, attrs }
         } else {
           console.log("AUTH FAILED")
-          resolve(null)
+          return null
         }
       } catch (authErr: any) {
         console.log("AUTH FAILED:", authErr.message)
-        resolve(null)
+        return null
       }
     } catch (err: any) {
       console.log("Search error:", err.message)
-      resolve(null)
+      return null
     }
-  })
+}
+
+async function checkGroupMembership(userDN: string, password: string): Promise<boolean> {
+  const ldapUrl = process.env.LDAP_URL || "ldap://localhost:389"
+  const bindDN = process.env.LDAP_BIND_DN || "cn=admin,dc=aster,dc=cat"
+  const bindPW = process.env.LDAP_BIND_PW || ""
+  const groupDN = "cn=gestors,ou=groups,dc=aster,dc=cat"
+
+  console.log("=== CHECK GROUP MEMBERSHIP ===")
+  console.log("User DN:", userDN)
+  console.log("Group DN:", groupDN)
+
+  const escapedUserDN = userDN.replace(/"/g, '\\"')
+  const escapedGroupDN = groupDN.replace(/"/g, '\\"')
+  const escapedBindDN = bindDN.replace(/"/g, '\\"')
+  const escapedBindPW = bindPW.replace(/"/g, '\\"')
+
+  const checkCmd = `${dockerCmd} exec ldap-server ldapsearch -H ${ldapUrl} -D "${escapedBindDN}" -w "${escapedBindPW}" -b "${escapedGroupDN}" "member=${escapedUserDN}" dn`
+
+  try {
+    const output = execSync(checkCmd, { encoding: 'utf8', maxBuffer: 1024 * 1024 })
+    console.log("Group check output:", output)
+    
+    if (output.includes('dn:') && output.includes('gestors')) {
+      console.log("USER IS MEMBER OF 'gestors'")
+      return true
+    }
+    return false
+  } catch (err: any) {
+    console.log("Group check error:", err.message)
+    return false
+  }
 }
 
 async function authenticateWithLDAP(email: string, password: string): Promise<LDAPUser | null> {

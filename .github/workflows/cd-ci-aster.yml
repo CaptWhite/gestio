@@ -90,8 +90,8 @@ jobs:
             echo "LDAP_USER_SEARCH=${{ secrets.LDAP_USER_SEARCH }}" >> .env
             # Auth
             echo "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" >> .env
-            echo "NEXTAUTH_URL=https://gestio.aster.cat" >> .env
-            echo "NEXTAUTH_URL_INTERNAL=http://gestio:3000" >> .env
+            echo "NEXTAUTH_URL=https://intranet.aster.cat:7443/" >> .env
+            echo "NEXTAUTH_URL_INTERNAL=https://intranet.aster.cat:7443/" >> .env
 
             echo "Actualizando imágenes y reiniciando..."
             docker compose -f docker-compose-aster.yml pull
