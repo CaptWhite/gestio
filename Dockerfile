@@ -25,6 +25,8 @@ WORKDIR /app
 
 ENV NODE_ENV production
 
+RUN apk add --no-cache docker-cli
+
 COPY --from=builder /app/public ./public
 
 # Set the correct permission for prerender cache

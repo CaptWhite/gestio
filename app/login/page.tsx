@@ -22,7 +22,7 @@ export default function LoginPage() {
     
     try {
       const result = await signIn("credentials", {
-        username,
+        email: username,
         password,
         redirect: false,
         callbackUrl
@@ -66,7 +66,7 @@ export default function LoginPage() {
 
           <div>
             <label htmlFor="username" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Usuari
+              Correu electrònic
             </label>
             <input
               id="username"
