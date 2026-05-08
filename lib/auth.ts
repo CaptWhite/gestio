@@ -79,7 +79,7 @@ async function dockerExecLDAPSearch(email: string, password: string): Promise<LD
     const escapedBindDN = bindDN.replace(/"/g, '\\"')
     const escapedBindPW = bindPW.replace(/"/g, '\\"')
 
-    const searchCmd = `${dockerCmd} exec ldap-server ldapsearch -H ${ldapUrl} -D "${escapedBindDN}" -w "${escapedBindPW}" -b "${escapedBase}" "${escapedFilter}" dn givenName sn mail cn`
+    const searchCmd = `${dockerCmd} exec ldap-server ldapsearch -H ${ldapUrl} -D "${escapedBindDN}" -w "${escapedBindPW}" -b "${escapedBase}" "${escapedFilter}" dn givenName sn mail cn uid`
 
     try {
       const output = execSync(searchCmd, { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 })
