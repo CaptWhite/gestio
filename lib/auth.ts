@@ -118,7 +118,7 @@ async function dockerExecLDAPSearch(email: string, password: string): Promise<LD
         if (authOutput.includes('dn:') || authOutput.includes('result: 0')) {
           console.log("AUTH OK!")
           
-          const isMember = await checkGroupMembership(dn, password)
+          const isMember = await checkGroupMembership(dn, attrs)
           if (!isMember) {
             console.log("USER NOT IN GROUP 'gestors' - REJECTED")
             return null
@@ -139,26 +139,32 @@ async function dockerExecLDAPSearch(email: string, password: string): Promise<LD
     }
 }
 
-async function checkGroupMembership(userDN: string, password: string): Promise<boolean> {
+async function checkGroupMembership(userDN: string, attrs: Record<string, string>): Promise<boolean> {
   const ldapUrl = process.env.LDAP_URL || "ldap://localhost:389"
   const bindDN = process.env.LDAP_BIND_DN || "cn=admin,dc=aster,dc=cat"
   const bindPW = process.env.LDAP_BIND_PW || ""
   const groupDN = "cn=gestors,ou=groups,dc=aster,dc=cat"
 
+  const userUID = attrs.uid
+  const memberDN = `uid=${userUID},ou=users,dc=aster,dc=cat`
+
   console.log("=== CHECK GROUP MEMBERSHIP ===")
   console.log("User DN:", userDN)
+  console.log("User UID:", userUID)
+  console.log("Member DN to check:", memberDN)
   console.log("Group DN:", groupDN)
 
-  const escapedUserDN = userDN.replace(/"/g, '\\"')
+  const escapedMemberDN = memberDN.replace(/"/g, '\\"')
   const escapedGroupDN = groupDN.replace(/"/g, '\\"')
   const escapedBindDN = bindDN.replace(/"/g, '\\"')
   const escapedBindPW = bindPW.replace(/"/g, '\\"')
 
-  const checkCmd = `${dockerCmd} exec ldap-server ldapsearch -H ${ldapUrl} -D "${escapedBindDN}" -w "${escapedBindPW}" -b "${escapedGroupDN}" "member=${escapedUserDN}" dn`
+  const checkCmd = `${dockerCmd} exec ldap-server ldapsearch -H ${ldapUrl} -D "${escapedBindDN}" -w "${escapedBindPW}" -b "${escapedGroupDN}" "member=${escapedMemberDN}" dn`
 
   try {
     const output = execSync(checkCmd, { encoding: 'utf8', maxBuffer: 1024 * 1024 })
     console.log("Group check output:", output)
+    console.log("Checking for member:", memberDN)
     
     if (output.includes('dn:') && output.includes('gestors')) {
       console.log("USER IS MEMBER OF 'gestors'")
