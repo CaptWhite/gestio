@@ -2,13 +2,37 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/auth';
+import { cookies } from 'next/headers';
+
+async function checkSimpleSession(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('session-token');
+  
+  if (!sessionCookie) return false;
+  
+  try {
+    const sessionData = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString('utf8'));
+    if (sessionData.exp && sessionData.exp > Date.now()) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  
+  return false;
+}
 
 export async function GET(request: Request) {
-  // const session = await getServerSession(authOptions);
-  // console.log("[Tasks API] Session:", session)
-  // if (!session) {
-  //   return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  // }
+  const authEnabled = process.env.ENABLE_AUTH !== 'false';
+  
+  if (authEnabled) {
+    const session = await getServerSession(authOptions);
+    const hasSimpleSession = await checkSimpleSession();
+    
+    if (!session && !hasSimpleSession) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+  }
   
   const { searchParams } = new URL(request.url);
   const mode = searchParams.get('mode');
@@ -33,7 +57,6 @@ export async function GET(request: Request) {
         }
       });
 
-      // Obtenir les 4 tasques més recents (per data d'actualització)
       const [recentTasks]: any = await pool.query(
         "SELECT id, title, date_update FROM tasques ORDER BY date_update DESC LIMIT 4"
       );
@@ -57,7 +80,6 @@ export async function GET(request: Request) {
 
     const [rows]: any = await pool.query('SELECT *, date_create as date FROM tasques ORDER BY date_create DESC');
     
-    // Formatear la fecha para que el frontend la entienda (YYYY-MM-DD)
     const formattedRows = rows.map((row: any) => ({
       ...row,
       date: row.date ? new Date(row.date).toISOString().split('T')[0] : null
@@ -71,16 +93,21 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  const authEnabled = process.env.ENABLE_AUTH !== 'false';
+  
+  if (authEnabled) {
+    const session = await getServerSession(authOptions);
+    const hasSimpleSession = await checkSimpleSession();
+    
+    if (!session && !hasSimpleSession) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
   }
   
   try {
     const data = await request.json();
     
     if (data.action === 'toggle') {
-      // Obtener el estado actual para alternarlo
       const [tasks]: any = await pool.query('SELECT status FROM tasques WHERE id = ?', [data.id]);
       if (tasks.length === 0) {
         return NextResponse.json({ error: 'Task not found' }, { status: 404 });
@@ -91,7 +118,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, status: newStatus });
     }
 
-    // Creación de una nueva tarea
     const { title, type, priority, status = 'pending' } = data;
     const [result]: any = await pool.query(
       'INSERT INTO tasques (title, type, status, priority) VALUES (?, ?, ?, ?)',
@@ -115,9 +141,15 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  const authEnabled = process.env.ENABLE_AUTH !== 'false';
+  
+  if (authEnabled) {
+    const session = await getServerSession(authOptions);
+    const hasSimpleSession = await checkSimpleSession();
+    
+    if (!session && !hasSimpleSession) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
   }
   
   try {

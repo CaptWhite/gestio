@@ -2,19 +2,43 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/auth';
+import { cookies } from 'next/headers';
+
+async function checkSimpleSession(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get('session-token');
+  
+  if (!sessionCookie) return false;
+  
+  try {
+    const sessionData = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString('utf8'));
+    if (sessionData.exp && sessionData.exp > Date.now()) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  
+  return false;
+}
 
 export async function GET(request: Request) {
-  // const session = await getServerSession(authOptions);
-  // if (!session) {
-  //   return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  // }
+  const authEnabled = process.env.ENABLE_AUTH !== 'false';
+  
+  if (authEnabled) {
+    const session = await getServerSession(authOptions);
+    const hasSimpleSession = await checkSimpleSession();
+    
+    if (!session && !hasSimpleSession) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+  }
   
   const { searchParams } = new URL(request.url);
   const mode = searchParams.get('mode');
 
   try {
     if (mode === 'stats') {
-      // 1. Estadístiques de socis actius i sexe
       const [activeRows]: any = await pool.query(
         "SELECT sexe, COUNT(*) as count FROM socis WHERE data_baixa IS NULL OR data_baixa = '' OR data_baixa = '-' GROUP BY sexe"
       );
@@ -33,7 +57,6 @@ export async function GET(request: Request) {
         }
       });
 
-      // 2. Altes per mes de l'any actual
       const currentYear = new Date().getFullYear();
       const [monthlyRows]: any = await pool.query(
         `SELECT MONTH(data_alta) as month, COUNT(*) as count 
@@ -50,10 +73,8 @@ export async function GET(request: Request) {
         }
       });
 
-      // 3. Activitat recent (registre_log)
       let recentActivity = [];
       try {
-        // Columna canviada manualment a 'descripcio' (sense accent)
         const [logRows]: any = await pool.query(
           "SELECT descripcio, date_update FROM registre_log ORDER BY date_update DESC LIMIT 5"
         );
@@ -85,7 +106,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ nextId });
     }
 
-    // Comportament normal: obtenir tots els socios
     const [rows]: any = await pool.query('SELECT * FROM socis ORDER BY cognoms, nom');
     
     const formattedRows = rows.map((row: any) => ({
@@ -106,9 +126,15 @@ export async function GET(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  const authEnabled = process.env.ENABLE_AUTH !== 'false';
+  
+  if (authEnabled) {
+    const session = await getServerSession(authOptions);
+    const hasSimpleSession = await checkSimpleSession();
+    
+    if (!session && !hasSimpleSession) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
   }
   
   try {
@@ -119,7 +145,6 @@ export async function PUT(request: Request) {
       data_alta, cobrament_inicial, data_baixa, comptecorrent, motiu_baixa, quota 
     } = body;
 
-    // Ara 'id' es la PK y 'id_socis' es el número de socio
     await pool.query(
       `UPDATE socis SET 
         id_socis = ?, sexe = ?, cognoms = ?, nom = ?, dni = ?, data_neix = ?, adreca = ?, 
@@ -143,9 +168,15 @@ export async function PUT(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  const authEnabled = process.env.ENABLE_AUTH !== 'false';
+  
+  if (authEnabled) {
+    const session = await getServerSession(authOptions);
+    const hasSimpleSession = await checkSimpleSession();
+    
+    if (!session && !hasSimpleSession) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
   }
   
   try {
@@ -156,7 +187,6 @@ export async function POST(request: Request) {
       data_alta, cobrament_inicial, data_baixa, comptecorrent, motiu_baixa, quota 
     } = body;
     
-    // No insertamos 'id' porque es AUTO_INCREMENT
     await pool.query(
       `INSERT INTO socis (
         id_socis, sexe, cognoms, nom, dni, data_neix, adreca, poblacio, 

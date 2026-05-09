@@ -4,22 +4,32 @@ export function middleware(request: any) {
   const pathname = request.nextUrl.pathname
   const cookieHeader = request.headers.get("cookie") || ""
   
-  const hasSessionCookie = cookieHeader.includes("next-auth.session-token")
+  const authEnabled = process.env.ENABLE_AUTH !== 'false';
   
-  // Allow login, api/auth, and _next paths
-  if (pathname === "/login" || pathname.startsWith("/api/auth") || pathname.startsWith("/api/") || pathname.startsWith("/_next") || pathname.includes("favicon") || pathname.includes("logo")) {
+  const hasNextAuthCookie = cookieHeader.includes("next-auth.session-token")
+  const hasSimpleAuthCookie = cookieHeader.includes("session-token")
+  
+  const isAuthenticated = hasNextAuthCookie || hasSimpleAuthCookie;
+  
+  if (pathname === "/login" || pathname.startsWith("/api/auth") || pathname.startsWith("/_next") || pathname.includes("favicon") || pathname.includes("logo")) {
     return NextResponse.next()
   }
   
-  // Protect root path (without trailing slash)
+  if (pathname.startsWith("/api/debug/")) {
+    return NextResponse.next()
+  }
+  
+  if (!authEnabled) {
+    return NextResponse.next()
+  }
+  
   if (pathname === "/") {
-    if (!hasSessionCookie) {
+    if (!isAuthenticated) {
       return NextResponse.redirect(new URL("/login", request.url))
     }
   }
   
-  // Protect other routes
-  if ((pathname === "/customers" || pathname === "/tasks" || pathname === "/settings" || pathname === "/inscriptions") && !hasSessionCookie) {
+  if ((pathname === "/customers" || pathname === "/tasks" || pathname === "/settings" || pathname === "/inscriptions") && !isAuthenticated) {
     return NextResponse.redirect(new URL("/login", request.url))
   }
   
@@ -27,5 +37,5 @@ export function middleware(request: any) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"]
+  matcher: ["/((?!api/debug|_next/static|_next/image|favicon.ico).*)"]
 }
