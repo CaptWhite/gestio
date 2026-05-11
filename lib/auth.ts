@@ -5,6 +5,14 @@ import { execSync } from "child_process"
 const isWindows = process.platform === "win32"
 const dockerCmd = isWindows ? "docker.exe" : "docker"
 
+export function normalizeUID(nom: string, cognoms: string): string {
+  return `${nom}.${cognoms}`
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, ".")
+    .toLowerCase();
+}
+
 interface LDAPUser {
   dn: string
   attrs: Record<string, string>
@@ -175,6 +183,76 @@ async function checkGroupMembership(userDN: string, attrs: Record<string, string
     console.log("Group check error:", err.message)
     return false
   }
+}
+
+async function addLDAPUser(memberData: { nom: string; cognoms: string; dni: string; email: string }, uid: string, employeeNumber: number): Promise<boolean> {
+  const { execSync } = require('child_process')
+  const fs = require('fs')
+  const path = require('path')
+  const os = require('os')
+
+  const ldapUrl = process.env.LDAP_URL || "ldap://localhost:389"
+  const baseDN = process.env.LDAP_BASE_DN || "dc=aster,dc=cat"
+  const bindDN = process.env.LDAP_BIND_DN || "cn=admin,dc=aster,dc=cat"
+  const bindPW = process.env.LDAP_BIND_PW || ""
+
+  const escapedBindDN = bindDN.replace(/"/g, '\\"')
+  const escapedBindPW = bindPW.replace(/"/g, '\\"')
+  const escapedNom = memberData.nom.replace(/"/g, '\\"')
+  const escapedCognoms = memberData.cognoms.replace(/"/g, '\\"')
+  const escapedEmail = memberData.email.replace(/"/g, '\\"')
+  const escapedDNI = memberData.dni.replace(/"/g, '\\"')
+  const escapedUID = uid.replace(/"/g, '\\"')
+
+  const ldif = `dn: cn=${escapedNom} ${escapedCognoms},ou=users,${baseDN}
+objectClass: inetOrgPerson
+cn: ${escapedNom} ${escapedCognoms}
+sn: ${escapedCognoms}
+givenName: ${escapedNom}
+displayName: ${escapedNom} ${escapedCognoms}
+userPassword: ${escapedDNI}
+mail: ${escapedEmail}
+employeeNumber: ${employeeNumber}
+uid: ${escapedUID}
+`
+
+  const timestamp = Date.now()
+  const tempDir = os.tmpdir()
+  const hostLdifPath = path.join(tempDir, `ldap_add_${timestamp}.ldif`)
+  const containerLdifPath = `/tmp/ldap_add_${timestamp}.ldif`
+
+  fs.writeFileSync(hostLdifPath, ldif, 'utf8')
+
+  const copyCmd = `${dockerCmd} cp "${hostLdifPath}" ldap-server:${containerLdifPath}`
+  const addCmd = `${dockerCmd} exec ldap-server ldapadd -H ${ldapUrl} -D "${escapedBindDN}" -w "${escapedBindPW}" -f ${containerLdifPath}`
+  const cleanupHostCmd = isWindows
+    ? `powershell -Command "Remove-Item -LiteralPath '${hostLdifPath}' -Force"`
+    : `rm -f "${hostLdifPath}"`
+  const cleanupContainerCmd = `${dockerCmd} exec ldap-server rm -f ${containerLdifPath}`
+
+  try {
+    execSync(copyCmd, { encoding: 'utf8', maxBuffer: 1024 * 1024 })
+    const output = execSync(addCmd, { encoding: 'utf8', maxBuffer: 1024 * 1024 })
+    console.log(`[Inscripció] Usuari LDAP afegit correctament: ${uid}`)
+    console.log(`[Inscripció] Sortida LDAP: ${output}`)
+  } catch (err: any) {
+    console.error(`[Inscripció] Error en afegir a LDAP:`, err.message || err)
+    return false
+  } finally {
+    try {
+      execSync(cleanupHostCmd, { encoding: 'utf8', maxBuffer: 1024 * 1024 })
+    } catch {
+    }
+    try {
+      execSync(cleanupContainerCmd, { encoding: 'utf8', maxBuffer: 1024 * 1024 })
+    } catch {
+    }
+  }
+  return true
+}
+
+export async function addLDAPUserFromInscription(memberData: { nom: string; cognoms: string; dni: string; email: string }, uid: string, employeeNumber: number): Promise<boolean> {
+  return addLDAPUser(memberData, uid, employeeNumber)
 }
 
 async function authenticateWithLDAP(email: string, password: string): Promise<LDAPUser | null> {

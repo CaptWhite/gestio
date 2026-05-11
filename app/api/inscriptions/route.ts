@@ -3,6 +3,8 @@ import pool from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/auth';
 import { cookies } from 'next/headers';
+import { addLDAPUserFromInscription, normalizeUID } from '@/lib/auth';
+import { sendMail } from '@/lib/sendMails';
 
 async function checkSimpleSession(): Promise<boolean> {
   const cookieStore = await cookies();
@@ -92,12 +94,12 @@ export async function POST(request: Request) {
     const currentPagat = previousPagat === 'si' ? 'no' : 'si';
     payload.pagat = currentPagat;
     
-    console.log(`[Inscription] Toggling payment for task ID ${id}: ${previousPagat} -> ${currentPagat}`);
+    console.log(`[Inscripció] Alternant pagament per a tasca ID ${id}: ${previousPagat} -> ${currentPagat}`);
     
     await pool.query('UPDATE tasques SET payload = ? WHERE id = ?', [JSON.stringify(payload), id]);
 
     if (currentPagat === 'si') {
-      console.log("[Inscription] Process starting to create new member...");
+      console.log("[Inscripció] Procés d'inici per crear un nou soci...");
       try {
         const formatDate = (dateStr: string) => {
           if (!dateStr) return null;
@@ -120,24 +122,24 @@ export async function POST(request: Request) {
           poblacio: adresaObj?.city || payload.poblacio || payload.localitat || '',
           telefon_fix: payload.telefon || payload.telefon_fix || '',
           mobil: payload.telefonmobil || payload.mobil || payload.telefon_mobil || '',
-          data_neix: formatDate(payload.data_naixement || payload.datanaixement),
+          data_neix: formatDate(payload.data_naixement || payload.datanaixement) || undefined,
           professio: payload.professio || '',
           quota: payload.quota || '',
           iban: payload.IBAN || payload.iban || '',
           observacions: payload.comentaris || ''
         };
 
-        console.log(`[Inscription] Data extracted for DNI: ${memberData.dni}`);
+        console.log(`[Inscripció] Dades extretes per DNI: ${memberData.dni}`);
 
         if (memberData.dni) {
           const [existing]: any = await pool.query('SELECT id FROM socis WHERE dni = ?', [memberData.dni]);
           if (existing.length > 0) {
-            console.log(`[Inscription] Duplicate check: Member with DNI ${memberData.dni} already exists. Skipping insertion.`);
+            console.log(`[Inscripció] Verificació de duplicat: El soci amb DNI ${memberData.dni} ja existeix. S'omet la inserció.`);
           } else {
             const [maxIdRow]: any = await pool.query('SELECT MAX(id_socis) as maxId FROM socis');
             const nextIdSocis = (maxIdRow[0]?.maxId || 0) + 1;
 
-            console.log(`[Inscription] SQL Insertion starting with new socio ID: ${nextIdSocis}`);
+            console.log(`[Inscripció] Inserció SQL iniciant-se amb el nou ID de soci: ${nextIdSocis}`);
             const [result]: any = await pool.query(
               `INSERT INTO socis (
                 id_socis, nom, cognoms, dni, correu_e_1, adreca, poblacio, 
@@ -163,18 +165,29 @@ export async function POST(request: Request) {
               ]
             );
             
-            console.log(`[Inscription] Success! New member created with DB ID: ${result.insertId}`);
+            console.log(`[Inscripció] Èxit! Nou soci creat amb DB ID: ${result.insertId}`);
             
             await pool.query(
               "INSERT INTO registre_log (descripcio) VALUES (?)",
               [`Alta automàtica de soci des d'inscripció: ${memberData.nom} ${memberData.cognoms}`]
             );
+
+            const uid = normalizeUID(memberData.nom, memberData.cognoms);
+            const ldapSuccess = await addLDAPUserFromInscription(memberData, uid, nextIdSocis);
+            if (!ldapSuccess) {
+              console.warn(`[Inscripció] Alta LDAP no completada per ${memberData.nom} ${memberData.cognoms}. registre a la base de dades creat però usuari LDAP no creat.`);
+            }
+
+            const mailResult = await sendMail('Carta de presentacio', memberData);
+            if (!mailResult.success) {
+              console.warn(`[Inscripció] Error en enviar correu: ${mailResult.error}`);
+            }
           }
         } else {
-          console.warn("[Inscription] Critical warning: No DNI found in payload. Insertion aborted.");
+          console.warn("[Inscripció] Avís crític: No s'ha trobat DNI al payload. Inserció avortada.");
         }
       } catch (err) {
-        console.error("[Inscription] ERROR during member creation:", err);
+        console.error("[Inscripció] ERROR en crear el soci:", err);
       }
     }
     

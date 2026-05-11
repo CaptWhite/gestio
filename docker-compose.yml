@@ -40,6 +40,11 @@ services:
       - AUTH_SECRET=${AUTH_SECRET}
       - NEXTAUTH_URL=${NEXTAUTH_URL}
       - NEXTAUTH_URL_INTERNAL=http://gestio:3000
+
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - OAUTH_CLIENTID=${OAUTH_CLIENTID}
+      - OAUTH_SECRET=${OAUTH_SECRET}
+      - OAUTH_REF_TOKEN=${OAUTH_REF_TOKEN}
     depends_on:
       - db
     networks:
