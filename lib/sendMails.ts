@@ -81,15 +81,22 @@ async function getCartaFromDB(title: string): Promise<CartaDB | null> {
 }
 
 async function sendMailGmail(config: { from: string; to: string; cc: string; bcc: string; subject: string; html: string }): Promise<string> {
-  const oauth2Client = new google.auth.OAuth2(
-    process.env.OAUTH_CLIENTID,
-    process.env.OAUTH_SECRET,
-    'https://developers.google.com/oauthplayground'
-  );
+  const clientId = process.env.OAUTH_CLIENTID;
+  const clientSecret = process.env.OAUTH_SECRET;
+  const refreshToken = process.env.OAUTH_REF_TOKEN;
 
-  oauth2Client.setCredentials({
-    refresh_token: process.env.OAUTH_REF_TOKEN
-  });
+  console.log(`[SendMail] OAuth credentials check:`);
+  console.log(`[SendMail] - OAUTH_CLIENTID: ${clientId ? 'SET' : 'NOT SET'}`);
+  console.log(`[SendMail] - OAUTH_SECRET: ${clientSecret ? 'SET' : 'NOT SET'}`);
+  console.log(`[SendMail] - OAUTH_REF_TOKEN: ${refreshToken ? 'SET' : 'NOT SET'}`);
+
+  if (!clientId || !clientSecret || !refreshToken) {
+    throw new Error(`Missing OAuth credentials: CLIENTID=${!!clientId}, SECRET=${!!clientSecret}, TOKEN=${!!refreshToken}`);
+  }
+
+  const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, 'https://developers.google.com/oauthplayground');
+
+  oauth2Client.setCredentials({ refresh_token: refreshToken });
 
   const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 

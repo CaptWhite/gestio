@@ -92,7 +92,12 @@ jobs:
             echo "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" >> .env
             echo "NEXTAUTH_URL=http://localhost:3000" >> .env
             echo "NEXTAUTH_URL_INTERNAL=http://localhost:3000" >> .env
-
+            # Email
+            echo "MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}" >> .env
+            echo "OAUTH_CLIENTID=${{ secrets.OAUTH_CLIENTID }}" >> .env
+            echo "OAUTH_SECRET=${{ secrets.OAUTH_SECRET }}" >> .env
+            echo "OAUTH_REF_TOKEN=${{ secrets.OAUTH_REF_TOKEN }}" >> .env
+            
             echo "Actualizando imágenes y reiniciando..."
             docker compose -f docker-compose-prod.yml pull
             docker compose -f docker-compose-prod.yml up -d --remove-orphans
