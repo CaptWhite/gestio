@@ -14,11 +14,13 @@ export function normalizeUID(nom: string, cognoms: string): string {
 }
 
 function parseLDIFValue(val: string): string {
-  if (val.startsWith(' ')) {
+  const trimmed = val.trim()
+  const isBase64 = /^[A-Za-z0-9+/=]+$/.test(trimmed) && trimmed.length % 4 === 0
+  if (isBase64 && trimmed.length > 0) {
     try {
-      return Buffer.from(val.trim(), 'base64').toString('utf8')
+      return Buffer.from(trimmed, 'base64').toString('utf8')
     } catch {
-      return val.trim()
+      return val
     }
   }
   return val
@@ -108,8 +110,10 @@ async function dockerExecLDAPSearch(email: string, password: string): Promise<LD
       const attrs: Record<string, string> = {}
 
       for (const line of lines) {
-        if (line.startsWith('dn:')) {
-          dn = parseLDIFValue(line.substring(3).trim())
+        if (line.startsWith('dn::')) {
+          dn = Buffer.from(line.substring(4).trim(), 'base64').toString('utf8')
+        } else if (line.startsWith('dn:')) {
+          dn = line.substring(3).trim()
         } else if (line.includes(':') && !line.startsWith('#')) {
           const colonIdx = line.indexOf(':')
           const key = line.substring(0, colonIdx).trim().toLowerCase()
