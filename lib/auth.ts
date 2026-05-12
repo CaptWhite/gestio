@@ -13,6 +13,17 @@ export function normalizeUID(nom: string, cognoms: string): string {
     .toLowerCase();
 }
 
+function parseLDIFValue(val: string): string {
+  if (val.startsWith(' ')) {
+    try {
+      return Buffer.from(val.trim(), 'base64').toString('utf8')
+    } catch {
+      return val.trim()
+    }
+  }
+  return val
+}
+
 interface LDAPUser {
   dn: string
   attrs: Record<string, string>
@@ -98,13 +109,13 @@ async function dockerExecLDAPSearch(email: string, password: string): Promise<LD
 
       for (const line of lines) {
         if (line.startsWith('dn:')) {
-          dn = line.substring(4).trim()
+          dn = parseLDIFValue(line.substring(3).trim())
         } else if (line.includes(':') && !line.startsWith('#')) {
           const colonIdx = line.indexOf(':')
           const key = line.substring(0, colonIdx).trim().toLowerCase()
           const val = line.substring(colonIdx + 1).trim()
           if (key && val && !val.startsWith('#')) {
-            attrs[key] = val
+            attrs[key] = parseLDIFValue(val)
           }
         }
       }
