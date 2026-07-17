@@ -76,7 +76,7 @@ export async function POST(request: Request) {
   }
   
   try {
-    const { id } = await request.json();
+    const { id, sexe } = await request.json();
     
     const [rows]: any = await pool.query('SELECT payload FROM tasques WHERE id = ?', [id]);
     if (rows.length === 0) {
@@ -90,6 +90,10 @@ export async function POST(request: Request) {
       payload = {};
     }
     
+    if (sexe) {
+      payload.sexe = sexe;
+    }
+
     const previousPagat = payload.pagat;
     const currentPagat = previousPagat === 'si' ? 'no' : 'si';
     payload.pagat = currentPagat;
@@ -113,7 +117,8 @@ export async function POST(request: Request) {
         const nomObj = payload.nom;
         const adresaObj = payload.adresa || payload.adreca;
         
-        const memberData = {
+        const memberData: any = {
+          id_socis: 0,
           nom: nomObj?.first_name || payload.nom || '',
           cognoms: nomObj?.last_name || payload.cognoms || '',
           dni: payload.dni || payload['dni-nif'] || '',
@@ -126,7 +131,8 @@ export async function POST(request: Request) {
           professio: payload.professio || '',
           quota: payload.quota || '',
           iban: payload.IBAN || payload.iban || '',
-          observacions: payload.comentaris || ''
+          observacions: payload.comentaris || '',
+          sexe: payload.sexe || ''
         };
 
         console.log(`[Inscripció] Dades extretes per DNI: ${memberData.dni}`);
@@ -138,16 +144,18 @@ export async function POST(request: Request) {
           } else {
             const [maxIdRow]: any = await pool.query('SELECT MAX(id_socis) as maxId FROM socis');
             const nextIdSocis = (maxIdRow[0]?.maxId || 0) + 1;
+            memberData.id_socis = nextIdSocis;
 
             console.log(`[Inscripció] Inserció SQL iniciant-se amb el nou ID de soci: ${nextIdSocis}`);
             const [result]: any = await pool.query(
               `INSERT INTO socis (
-                id_socis, nom, cognoms, dni, correu_e_1, adreca, poblacio, 
+                id_socis, sexe, nom, cognoms, dni, correu_e_1, adreca, poblacio, 
                 telefon_fix, mobil, data_neix, professio, quota, 
                 comptecorrent, observacions, data_alta
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
               [
                 nextIdSocis,
+                memberData.sexe,
                 memberData.nom,
                 memberData.cognoms,
                 memberData.dni,
@@ -181,6 +189,11 @@ export async function POST(request: Request) {
             const mailResult = await sendMail('Carta de presentacio', memberData);
             if (!mailResult.success) {
               console.warn(`[Inscripció] Error en enviar correu: ${mailResult.error}`);
+            }
+
+            const notificationMailResult = await sendMail('Notificació Alta de Soci ', memberData);
+            if (!notificationMailResult.success) {
+              console.warn(`[Inscripció] Error en enviar correu de notificació: ${notificationMailResult.error}`);
             }
           }
         } else {

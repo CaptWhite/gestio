@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 export default function SettingsPage() {
   const [nom, setNom] = useState("");
   const [correu, setCorreu] = useState("");
+  const [header, setHeader] = useState("");
+  const [footer, setFooter] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -20,6 +22,8 @@ export default function SettingsPage() {
       if (res.ok) {
         setNom(data.nom || "");
         setCorreu(data.correu || "");
+        setHeader(data.header || "");
+        setFooter(data.footer || "");
       } else {
         setMessage({ type: 'error', text: data.error || "Error al cargar configuración" });
       }
@@ -38,7 +42,7 @@ export default function SettingsPage() {
       const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nom, correu })
+        body: JSON.stringify({ nom, correu, header, footer })
       });
       const data = await res.json();
       if (res.ok) {
@@ -104,6 +108,24 @@ export default function SettingsPage() {
                 value={correu} 
                 onChange={(e) => setCorreu(e.target.value)}
                 placeholder="Ex: secretaria@aster.cat"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Header</label>
+              <textarea 
+                className="input w-full h-24 resize-none" 
+                value={header} 
+                onChange={(e) => setHeader(e.target.value)}
+                placeholder="Capçalera de les cartes..."
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Footer</label>
+              <textarea 
+                className="input w-full h-24 resize-none" 
+                value={footer} 
+                onChange={(e) => setFooter(e.target.value)}
+                placeholder="Peu de les cartes..."
               />
             </div>
             <div className="flex justify-end">

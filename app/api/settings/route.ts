@@ -35,7 +35,7 @@ export async function GET() {
   }
   
   try {
-    const [rows] = await pool.query('SELECT nom, correu FROM config LIMIT 1');
+    const [rows] = await pool.query('SELECT nom, correu, header, footer FROM config LIMIT 1');
     const config = (rows as any[])[0];
 
     if (!config) {
@@ -62,11 +62,11 @@ export async function POST(request: Request) {
   }
   
   try {
-    const { nom, correu } = await request.json();
+    const { nom, correu, header, footer } = await request.json();
 
     await pool.query(
-      'UPDATE config SET nom = ?, correu = ? WHERE id = (SELECT id FROM (SELECT id FROM config LIMIT 1) as t)',
-      [nom, correu]
+      'UPDATE config SET nom = ?, correu = ?, header = ?, footer = ? WHERE id = (SELECT id FROM (SELECT id FROM config LIMIT 1) as t)',
+      [nom, correu, header || '', footer || '']
     );
 
     return NextResponse.json({ message: 'Configuración actualizada correctamente' });

@@ -9,13 +9,15 @@ import {
   CheckSquare, 
   Settings,
   UserPlus,
-  LogOut
+  LogOut,
+  Mail
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Socis', href: '/customers', icon: Users },
+  { name: 'Cartes', href: '/cartes', icon: Mail },
   { name: 'Tasques', href: '/tasks', icon: CheckSquare },
   { name: 'Inscripcions', href: '/inscriptions', icon: UserPlus },
   { name: 'Configuració', href: '/settings', icon: Settings },

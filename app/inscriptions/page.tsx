@@ -1,14 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CheckCircle2, Circle, Calendar, CreditCard, Pencil } from "lucide-react";
+import { CheckCircle2, Circle, Calendar, CreditCard, Pencil, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+
+interface InscriptionItem {
+  id: number;
+  payload: Record<string, any>;
+}
 
 export default function InscriptionsPage() {
   const [inscriptions, setInscriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSexModal, setShowSexModal] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedName, setSelectedName] = useState("");
 
+  // Fetch de les inscripcions des de l'API
   const fetchInscriptions = async () => {
     try {
       const res = await fetch('/api/inscriptions');
@@ -31,12 +40,34 @@ export default function InscriptionsPage() {
     fetchInscriptions();
   }, []);
 
-  const togglePagat = async (id: string) => {
+  // Funció per comprovar si el camp sexe està present i, si no, mostrar el modal
+  const checkAndTogglePagat = (item: InscriptionItem) => {
+    const payload = item.payload || {};
+    if (!payload.sexe) {
+      setSelectedId(item.id);
+      setSelectedName(`${payload.cognoms || ''}, ${payload.nom || ''}`);
+      setShowSexModal(true);
+    } else {
+      togglePagat(item.id.toString());
+    }
+  };
+
+  // Funció per actualitzar el camp sexe a l'API i fer toggle de pago
+  const handleSexSelect = async (sexe: string) => {
+    if (!selectedId) return;
+    
+    setShowSexModal(false);
+    togglePagat(selectedId.toString(), sexe);
+    setSelectedId(null);
+  };
+
+  // Funció per canviar el camp "pagat" a l'API
+  const togglePagat = async (id: string, sexe?: string) => {
     try {
       await fetch('/api/inscriptions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
+        body: JSON.stringify({ id, sexe })
       });
       fetchInscriptions();
     } catch (error) {
@@ -44,6 +75,7 @@ export default function InscriptionsPage() {
     }
   };
 
+  // 
   const inscriptionsList = Array.isArray(inscriptions) ? inscriptions : [];
 
   return (
@@ -78,7 +110,7 @@ export default function InscriptionsPage() {
                 )}
               >
                 <button 
-                  onClick={() => togglePagat(item.id)}
+                  onClick={() => checkAndTogglePagat(item)}
                   className="text-zinc-400 hover:text-accent transition-colors"
                 >
                   {isPagat ? (
@@ -121,6 +153,33 @@ export default function InscriptionsPage() {
           })
         )}
       </div>
+
+      {showSexModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-background w-full max-w-md rounded-lg shadow-xl border border-border">
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <div>
+                <h2 className="text-lg font-semibold">Seleccionar Sexe</h2>
+                {selectedName && <p className="text-sm font-medium mt-1">{selectedName}</p>}
+              </div>
+              <button onClick={() => { setShowSexModal(false); setSelectedId(null); }} className="p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-zinc-500">El formulari d'inscripció no inclou el camp sexe. Selecciona una opció per continuar:</p>
+              <div className="flex gap-3">
+                <button onClick={() => handleSexSelect('H')} className="flex-1 py-2 px-4 border border-border rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors font-medium">H - Home</button>
+                <button onClick={() => handleSexSelect('D')} className="flex-1 py-2 px-4 border border-border rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors font-medium">D - Dona</button>
+                <button onClick={() => handleSexSelect('A')} className="flex-1 py-2 px-4 border border-border rounded-md hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors font-medium">A - Altre</button>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 p-6 border-t border-border">
+              <button onClick={() => { setShowSexModal(false); setSelectedId(null); }} className="btn-secondary">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

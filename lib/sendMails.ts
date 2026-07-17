@@ -9,13 +9,17 @@ const md = new MarkdownIt({
 });
 
 interface CartaDB {
-  header: string;
   body: string;
-  footer: string;
+  bodyFem: string;
   _to: string;
   _cc: string;
   _cco: string;
   subject: string;
+}
+
+interface ConfigDB {
+  header: string;
+  footer: string;
 }
 
 interface TemplateVars {
@@ -28,6 +32,7 @@ interface TemplateVars {
   poblacio?: string;
   telefon_fix?: string;
   mobil?: string;
+  sexe?: string;
 }
 
 function replaceTemplateVars(text: string, vars: TemplateVars): string {
@@ -36,8 +41,9 @@ function replaceTemplateVars(text: string, vars: TemplateVars): string {
   });
 }
 
-function buildHTML(vars: TemplateVars, carta: CartaDB): string {
-  let mainProcessed = replaceTemplateVars(carta.body, vars);
+function buildHTML(vars: TemplateVars, carta: CartaDB, config: ConfigDB): string {
+  const bodyContent = vars.sexe === 'D' && carta.bodyFem ? carta.bodyFem : carta.body;
+  let mainProcessed = replaceTemplateVars(bodyContent, vars);
   mainProcessed = mainProcessed.replace(/\\n|\n/g, '\n');
   const mainHTML = md.render(mainProcessed);
 
@@ -47,9 +53,9 @@ function buildHTML(vars: TemplateVars, carta: CartaDB): string {
 <meta charset="utf-8">
 </head>
 <body>
-${carta.header}
+${config.header || ''}
 ${mainHTML}
-${carta.footer}
+${config.footer || ''}
 </body>
 </html>`;
 }
@@ -71,13 +77,21 @@ function encodeHeader(str: string): string {
 
 async function getCartaFromDB(title: string): Promise<CartaDB | null> {
   const [rows]: any = await pool.query(
-    'SELECT header, body, footer, _to, _cc, _cco, subject FROM cartes WHERE title = ?',
+    'SELECT body, bodyFem, _to, _cc, _cco, subject FROM cartes WHERE title = ?',
     [title]
   );
   if (rows.length === 0) {
     return null;
   }
   return rows[0] as CartaDB;
+}
+
+async function getConfigFromDB(): Promise<ConfigDB> {
+  const [rows]: any = await pool.query('SELECT header, footer FROM config LIMIT 1');
+  if (rows.length === 0) {
+    return { header: '', footer: '' };
+  }
+  return rows[0] as ConfigDB;
 }
 
 async function sendMailGmail(config: { from: string; to: string; cc: string; bcc: string; subject: string; html: string }): Promise<string> {
@@ -124,23 +138,35 @@ async function sendMailGmail(config: { from: string; to: string; cc: string; bcc
   return res.data.id || '';
 }
 
-export async function sendMail(cartaTitle: string, memberData: TemplateVars): Promise<{ success: boolean; messageId?: string; error?: string }> {
+interface MailOverrides {
+  to?: string;
+  cc?: string;
+  cco?: string;
+}
+
+export async function sendMail(cartaTitle: string, memberData: TemplateVars, mailOverrides?: MailOverrides): Promise<{ success: boolean; messageId?: string; error?: string }> {
   try {
     const carta = await getCartaFromDB(cartaTitle);
     if (!carta) {
       return { success: false, error: `No es va trobar cap carta amb title='${cartaTitle}'` };
     }
 
-    const config = {
+    const dbConfig = await getConfigFromDB();
+
+    const to = mailOverrides?.to ? mailOverrides.to : replaceTemplateVars(carta._to, memberData);
+    const cc = mailOverrides?.cc ? mailOverrides.cc : replaceTemplateVars(carta._cc, memberData);
+    const bcc = mailOverrides?.cco ? mailOverrides.cco : replaceTemplateVars(carta._cco, memberData);
+
+    const mailConfig = {
       from: process.env.MAIL_USERNAME || '',
-      to: replaceTemplateVars(carta._to, memberData),
-      cc: replaceTemplateVars(carta._cc, memberData),
-      bcc: replaceTemplateVars(carta._cco, memberData),
+      to,
+      cc,
+      bcc,
       subject: replaceTemplateVars(carta.subject, memberData),
-      html: buildHTML(memberData, carta)
+      html: buildHTML(memberData, carta, dbConfig)
     };
 
-    const messageId = await sendMailGmail(config);
+    const messageId = await sendMailGmail(mailConfig);
     console.log(`[SendMail] Correu enviat: ${messageId} per carta title='${cartaTitle}'`);
 
     return { success: true, messageId };
