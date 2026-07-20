@@ -10,7 +10,8 @@ import {
   Settings,
   UserPlus,
   LogOut,
-  Mail
+  Mail,
+  GraduationCap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ const navigation = [
   { name: 'Cartes', href: '/cartes', icon: Mail },
   { name: 'Tasques', href: '/tasks', icon: CheckSquare },
   { name: 'Inscripcions', href: '/inscriptions', icon: UserPlus },
+  { name: "Curs d'Iniciació", href: '/curs-iniciacio', icon: GraduationCap },
   { name: 'Configuració', href: '/settings', icon: Settings },
 ];
 

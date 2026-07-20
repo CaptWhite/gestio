@@ -1,40 +1,14 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/auth';
-import { cookies } from 'next/headers';
-
-async function checkSimpleSession(): Promise<boolean> {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('session-token');
-  
-  if (!sessionCookie) return false;
-  
-  try {
-    const sessionData = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString('utf8'));
-    if (sessionData.exp && sessionData.exp > Date.now()) {
-      return true;
-    }
-  } catch {
-    return false;
-  }
-  
-  return false;
-}
+import { isAuthorized } from '@/lib/apiAuth';
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const authEnabled = process.env.ENABLE_AUTH !== 'false';
-  
-  if (authEnabled) {
-    const session = await getServerSession(authOptions);
-    const hasSimpleSession = await checkSimpleSession();
-    
-    if (!session && !hasSimpleSession) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+  const authorized = await isAuthorized();
+  if (!authorized) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   
   try {
@@ -60,15 +34,9 @@ export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const authEnabled = process.env.ENABLE_AUTH !== 'false';
-  
-  if (authEnabled) {
-    const session = await getServerSession(authOptions);
-    const hasSimpleSession = await checkSimpleSession();
-    
-    if (!session && !hasSimpleSession) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+  const authorized = await isAuthorized();
+  if (!authorized) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   
   try {

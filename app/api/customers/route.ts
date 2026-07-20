@@ -1,37 +1,11 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/auth';
-import { cookies } from 'next/headers';
-
-async function checkSimpleSession(): Promise<boolean> {
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get('session-token');
-  
-  if (!sessionCookie) return false;
-  
-  try {
-    const sessionData = JSON.parse(Buffer.from(sessionCookie.value, 'base64').toString('utf8'));
-    if (sessionData.exp && sessionData.exp > Date.now()) {
-      return true;
-    }
-  } catch {
-    return false;
-  }
-  
-  return false;
-}
+import { isAuthorized } from '@/lib/apiAuth';
 
 export async function GET(request: Request) {
-  const authEnabled = process.env.ENABLE_AUTH !== 'false';
-  
-  if (authEnabled) {
-    const session = await getServerSession(authOptions);
-    const hasSimpleSession = await checkSimpleSession();
-    
-    if (!session && !hasSimpleSession) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+  const authorized = await isAuthorized();
+  if (!authorized) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   
   const { searchParams } = new URL(request.url);
@@ -108,11 +82,17 @@ export async function GET(request: Request) {
 
     const [rows]: any = await pool.query('SELECT * FROM socis ORDER BY cognoms, nom');
     
+    const safeDate = (val: any) => {
+      if (!val) return null;
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? null : d.toISOString().split('T')[0];
+    };
+
     const formattedRows = rows.map((row: any) => ({
       ...row,
-      data_neix: row.data_neix ? new Date(row.data_neix).toISOString().split('T')[0] : null,
-      data_alta: row.data_alta ? new Date(row.data_alta).toISOString().split('T')[0] : null,
-      data_baixa: row.data_baixa ? new Date(row.data_baixa).toISOString().split('T')[0] : null,
+      data_neix: safeDate(row.data_neix),
+      data_alta: safeDate(row.data_alta),
+      data_baixa: safeDate(row.data_baixa),
     }));
     
     return NextResponse.json(formattedRows);
@@ -126,15 +106,9 @@ export async function GET(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  const authEnabled = process.env.ENABLE_AUTH !== 'false';
-  
-  if (authEnabled) {
-    const session = await getServerSession(authOptions);
-    const hasSimpleSession = await checkSimpleSession();
-    
-    if (!session && !hasSimpleSession) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+  const authorized = await isAuthorized();
+  if (!authorized) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   
   try {
@@ -168,15 +142,9 @@ export async function PUT(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const authEnabled = process.env.ENABLE_AUTH !== 'false';
-  
-  if (authEnabled) {
-    const session = await getServerSession(authOptions);
-    const hasSimpleSession = await checkSimpleSession();
-    
-    if (!session && !hasSimpleSession) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-    }
+  const authorized = await isAuthorized();
+  if (!authorized) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   
   try {

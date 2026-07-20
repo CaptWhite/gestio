@@ -91,12 +91,19 @@ jobs:
             echo "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" >> .env
             echo "NEXTAUTH_URL=https://gestio.aster.cat/" >> .env
             echo "NEXTAUTH_URL_INTERNAL=https://gestio.aster.cat/" >> .env
+            echo "ENABLE_AUTH=${{ secrets.ENABLE_AUTH }}" >> .env
+            echo "INTERNAL_API_SECRET=${{ secrets.INTERNAL_API_SECRET }}" >> .env
             # Email
             echo "MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}" >> .env
             echo "OAUTH_CLIENTID=${{ secrets.OAUTH_CLIENTID }}" >> .env
             echo "OAUTH_SECRET=${{ secrets.OAUTH_SECRET }}" >> .env
             echo "OAUTH_REF_TOKEN=${{ secrets.OAUTH_REF_TOKEN }}" >> .env
-
+            # Remote DB (Dinaserver/WP)
+            echo "REMOTE_DB_HOST=${{ secrets.REMOTE_DB_HOST }}" >> .env
+            echo "REMOTE_DB_USER=${{ secrets.REMOTE_DB_USER }}" >> .env
+            echo "REMOTE_DB_PASSWORD=${{ secrets.REMOTE_DB_PASSWORD }}" >> .env
+            echo "REMOTE_DB_PORT=${{ secrets.REMOTE_DB_PORT }}" >> .env
+            echo "REMOTE_DB_DATABASE=${{ secrets.REMOTE_DB_DATABASE }}" >> .env
 
             echo "Actualizando imágenes y reiniciando..."
             docker compose -f docker-compose-aster.yml pull
