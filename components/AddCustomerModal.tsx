@@ -172,7 +172,7 @@ export default function AddCustomerModal({ onClose, onSuccess }: AddCustomerModa
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1.5">Professió</label>
+              <label className="block text-sm font-medium mb-1.5"></label>
               <input 
                 type="text" 
                 className="input w-full" 

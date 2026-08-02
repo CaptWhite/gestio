@@ -8,10 +8,10 @@ services:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
     networks:
       - app-network
 
@@ -22,7 +22,7 @@ services:
     container_name: ${ROUTER}-app
     restart: always
     ports:
-      - "3000:3000"
+      - "8060:3000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
@@ -68,7 +68,7 @@ services:
     depends_on:
       - db
     ports:
-      - "8091:80"  
+      - "8061:80"  
     networks:
       - app-network
 
